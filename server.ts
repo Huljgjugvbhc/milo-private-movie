@@ -10,6 +10,7 @@ import { nanoid } from "nanoid";
 import dotenv from "dotenv";
 import multer from "multer";
 import fs from "fs";
+import os from "os";
 import { uploadToStorage, getSignedStreamUrl } from "./services/storage.ts";
 import { convertToMp4 } from "./services/ffmpeg.ts";
 import { redis, setRoom, getRoom, getAllRooms } from "./services/redis.ts";
@@ -18,11 +19,8 @@ import { saveMessage, getChatHistory, supabase } from "./services/supabase.ts";
 dotenv.config();
 
 const JWT_SECRET = process.env.JWT_SECRET || "sanctuary-secret-key";
-const upload = multer({ dest: "uploads/" });
-
-if (!fs.existsSync("uploads")) {
-  fs.mkdirSync("uploads");
-}
+const uploadDir = os.tmpdir();
+const upload = multer({ dest: uploadDir });
 
 async function startServer() {
   const app = express();
@@ -102,7 +100,7 @@ async function startServer() {
     const { roomHash } = req.body;
     const inputPath = req.file.path;
     const outputFileName = `${nanoid()}.mp4`;
-    const outputPath = path.join("uploads", outputFileName);
+    const outputPath = path.join(uploadDir, outputFileName);
 
     try {
       // Convert if not mp4
